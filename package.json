@@ -1,0 +1,19 @@
+{
+  "name": "stickgame_phaser",
+  "version": "1.0.0",
+  "description": "Stickman game",
+  "main": "game.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnmiddleton12/stickmanperil.git"
+  },
+  "author": "Johnathan Middleton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/johnmiddleton12/stickmanperil/issues"
+  },
+  "homepage": "https://github.com/johnmiddleton12/stickmanperil#readme"
+}

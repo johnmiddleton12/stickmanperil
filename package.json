@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/johnmiddleton12/stickmanperil/issues"
   },
-  "homepage": "https://github.com/johnmiddleton12/stickmanperil#readme"
+  "homepage": "https://github.com/johnmiddleton12/stickmanperil#readme",
+  "dependencies": {
+    "phaser": "^3.24.1"
+  }
 }

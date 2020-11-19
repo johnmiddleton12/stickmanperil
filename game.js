@@ -26,6 +26,10 @@ var text;
 var cam;
 var smoothedControls;
 var map;
+var tileset;
+var bgLayer;
+var groundLayer;
+var fgLayer;
 
 // Smoothed horizontal controls helper. This gives us a value between -1 and 1 depending on how long
 // the player has been pressing left or right, respectively.
@@ -62,15 +66,41 @@ var SmoothedHorionztalControl = new Phaser.Class({
 
 function preload ()
 {
-    this.load.tilemapTiledJSON('map', 'assets/matter-platformer-dynamic-example.json');
+    // this.load.tilemapTiledJSON('map', 'assets/matter-platformer-dynamic-example.json');
+    this.load.tilemapTiledJSON('level1', 'assets/level1.json');
     this.load.image('kenney_redux_64x64', 'assets/kenney_redux_64x64.png');
     this.load.spritesheet('player', 'assets/dude-cropped.png', { frameWidth: 32, frameHeight: 42 });
     this.load.image('box', 'assets/box-item-boxed.png');
+
+}
+
+function load_level (key)
+{
+    map = game.make.tilemap({ key: key });
+
+    tileset = map.addTilesetImage('kenney_redux_64x64');
+    bgLayer = map.createDynamicLayer('Background Layer', tileset, 0, 0);
+    groundLayer = map.createDynamicLayer('Ground Layer', tileset, 0, 0);
+    fgLayer = map.createDynamicLayer('Foreground Layer', tileset, 0, 0).setDepth(1);
+
+    // Set up the layer to have matter bodies. Any colliding tiles will be given a Matter body.
+    groundLayer.setCollisionByProperty({ collides: true });
+    game.matter.world.convertTilemapLayer(groundLayer);
+
+    // bgLayer.setCollisionByProperty({collides: true});
+    // this.matter.world.convertTilemapLayer(bgLayer);
+
+    // fgLayer.setCollisionByProperty({collides: false});
+    // this.matter.world.convertTilemapLayer(fgLayer);
+
+    game.matter.world.setBounds(map.widthInPixels, map.heightInPixels);
 }
 
 function create ()
 {
-    map = this.make.tilemap({ key: 'map' });
+    // map = this.make.tilemap({ key: 'map' });
+    map = this.make.tilemap({ key: 'level1'});
+
     var tileset = map.addTilesetImage('kenney_redux_64x64');
     var bgLayer = map.createDynamicLayer('Background Layer', tileset, 0, 0);
     var groundLayer = map.createDynamicLayer('Ground Layer', tileset, 0, 0);
@@ -80,7 +110,16 @@ function create ()
     groundLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(groundLayer);
 
+    // bgLayer.setCollisionByProperty({collides: true});
+    // this.matter.world.convertTilemapLayer(bgLayer);
+
+    // fgLayer.setCollisionByProperty({collides: false});
+    // this.matter.world.convertTilemapLayer(fgLayer);
+
     this.matter.world.setBounds(map.widthInPixels, map.heightInPixels);
+
+    // load_level('level1');
+
     this.matter.world.createDebugGraphic();
     this.matter.world.drawDebug = false;
 
@@ -144,9 +183,13 @@ function create ()
 
     // There is a "Button Press Sensor" polygon in the "Sensors" layer in Tiled. We can use this to
     // map out the "pressable" hitbox for the button.
+
     var sensor = map.findObject('Sensors', function (obj) {
+        // return obj.name === 'Button Press Sensor';
         return obj.name === 'Button Press Sensor';
     });
+
+
     var center = M.Vertices.centre(sensor.polygon); // Matter places shapes by center of mass
     var sensorBody = this.matter.add.fromVertices(
         sensor.x + center.x, sensor.y + center.y,
@@ -282,7 +325,7 @@ function create ()
     }, this);
 
     var lines = [
-        'Arrow keys to move. Up to jump',
+        'A and D to move, W to jump',
         'Click to toggle rendering Matter debug.'
     ];
     text = this.add.text(16, 16, lines, {
@@ -297,82 +340,20 @@ function create ()
 function update (time, delta)
 {
     var matterSprite = playerController.matterSprite;
+    
+    inputs(time, delta, matterSprite, this.scene)
+    
     if (!matterSprite) { return; }
 
     // Player death
 
     if (matterSprite.y > map.heightInPixels)
     {
-        matterSprite.destroy();
-        playerController.matterSprite = null;
-        restart.call(this);
+        // matterSprite.destroy();
+        // playerController.matterSprite = null;
+        restart.call(this, this.scene);
         return;
-    }
-
-    // Horizontal movement
-
-    var oldVelocityX;
-    var targetVelocityX;
-    var newVelocityX;
-
-    if (cursors.left.isDown && !playerController.blocked.left)
-    {
-        smoothedControls.moveLeft(delta);
-        matterSprite.anims.play('left', true);
-
-        // Lerp the velocity towards the max run using the smoothed controls. This simulates a
-        // player controlled acceleration.
-        oldVelocityX = matterSprite.body.velocity.x;
-        targetVelocityX = -playerController.speed.run;
-        newVelocityX = Phaser.Math.Linear(oldVelocityX, targetVelocityX, -smoothedControls.value);
-
-        matterSprite.setVelocityX(newVelocityX);
-    }
-    else if (cursors.right.isDown && !playerController.blocked.right)
-    {
-        smoothedControls.moveRight(delta);
-        matterSprite.anims.play('right', true);
-
-        // Lerp the velocity towards the max run using the smoothed controls. This simulates a
-        // player controlled acceleration.
-        oldVelocityX = matterSprite.body.velocity.x;
-        targetVelocityX = playerController.speed.run;
-        newVelocityX = Phaser.Math.Linear(oldVelocityX, targetVelocityX, smoothedControls.value);
-
-        matterSprite.setVelocityX(newVelocityX);
-    }
-    else
-    {
-        smoothedControls.reset();
-        matterSprite.anims.play('idle', true);
-    }
-
-    // Jumping + WALLJUMPING
-
-    // Add a slight delay between jumps since the sensors will still collide for a few frames after
-    // a jump is initiated
-    var canJump = (time - playerController.lastJumpedAt) > 250;
-
-    if (cursors.up.isDown & canJump)
-    {
-        if (playerController.blocked.bottom)
-        {
-            matterSprite.setVelocityY(-playerController.speed.jump);
-            playerController.lastJumpedAt = time;
-        } 
-        else if (playerController.blocked.left)
-        {
-            matterSprite.setVelocityX(playerController.speed.sideJump);
-            matterSprite.setVelocityY(-playerController.speed.jump);
-            playerController.lastJumpedAt = time;
-        }
-        else if (playerController.blocked.right)
-        {
-            matterSprite.setVelocityX(-playerController.speed.sideJump);
-            matterSprite.setVelocityY(-playerController.speed.jump);
-            playerController.lastJumpedAt = time;
-        }
-    }
+    }    
 
     smoothMoveCameraTowards(matterSprite, 0.9);
 }
@@ -395,7 +376,7 @@ function restart ()
         {
             cam.resetFX();
             this.scene.stop();
-            game.scene.start('main');
+            this.scene.start('main');
         },
         callbackScope: this
     });

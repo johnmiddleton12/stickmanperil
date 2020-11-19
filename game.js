@@ -30,6 +30,7 @@ var tileset;
 var bgLayer;
 var groundLayer;
 var fgLayer;
+var current_level = 'level1';
 
 // Smoothed horizontal controls helper. This gives us a value between -1 and 1 depending on how long
 // the player has been pressing left or right, respectively.
@@ -66,7 +67,7 @@ var SmoothedHorionztalControl = new Phaser.Class({
 
 function preload ()
 {
-    // this.load.tilemapTiledJSON('map', 'assets/matter-platformer-dynamic-example.json');
+    this.load.tilemapTiledJSON('level0', 'assets/matter-platformer-dynamic-example.json');
     this.load.tilemapTiledJSON('level1', 'assets/level1.json');
     this.load.image('kenney_redux_64x64', 'assets/kenney_redux_64x64.png');
     this.load.spritesheet('player', 'assets/dude-cropped.png', { frameWidth: 32, frameHeight: 42 });
@@ -74,9 +75,10 @@ function preload ()
 
 }
 
-function load_level (key)
+function load_level (key, self)
 {
-    map = game.make.tilemap({ key: key });
+    // map = this.make.tilemap({ key: 'map' });
+    map = self.make.tilemap({ key: key});
 
     tileset = map.addTilesetImage('kenney_redux_64x64');
     bgLayer = map.createDynamicLayer('Background Layer', tileset, 0, 0);
@@ -85,7 +87,7 @@ function load_level (key)
 
     // Set up the layer to have matter bodies. Any colliding tiles will be given a Matter body.
     groundLayer.setCollisionByProperty({ collides: true });
-    game.matter.world.convertTilemapLayer(groundLayer);
+    self.matter.world.convertTilemapLayer(groundLayer);
 
     // bgLayer.setCollisionByProperty({collides: true});
     // this.matter.world.convertTilemapLayer(bgLayer);
@@ -93,32 +95,16 @@ function load_level (key)
     // fgLayer.setCollisionByProperty({collides: false});
     // this.matter.world.convertTilemapLayer(fgLayer);
 
-    game.matter.world.setBounds(map.widthInPixels, map.heightInPixels);
+    self.matter.world.setBounds(map.widthInPixels, map.heightInPixels);
+    
 }
 
 function create ()
 {
-    // map = this.make.tilemap({ key: 'map' });
-    map = this.make.tilemap({ key: 'level1'});
 
-    var tileset = map.addTilesetImage('kenney_redux_64x64');
-    var bgLayer = map.createDynamicLayer('Background Layer', tileset, 0, 0);
-    var groundLayer = map.createDynamicLayer('Ground Layer', tileset, 0, 0);
-    var fgLayer = map.createDynamicLayer('Foreground Layer', tileset, 0, 0).setDepth(1);
+    load_level(current_level, this);
+    // load_level('map', this)
 
-    // Set up the layer to have matter bodies. Any colliding tiles will be given a Matter body.
-    groundLayer.setCollisionByProperty({ collides: true });
-    this.matter.world.convertTilemapLayer(groundLayer);
-
-    // bgLayer.setCollisionByProperty({collides: true});
-    // this.matter.world.convertTilemapLayer(bgLayer);
-
-    // fgLayer.setCollisionByProperty({collides: false});
-    // this.matter.world.convertTilemapLayer(fgLayer);
-
-    this.matter.world.setBounds(map.widthInPixels, map.heightInPixels);
-
-    // load_level('level1');
 
     this.matter.world.createDebugGraphic();
     this.matter.world.drawDebug = false;
@@ -325,7 +311,7 @@ function create ()
     }, this);
 
     var lines = [
-        'A and D to move, W to jump',
+        'A and D to move, W to jump, S to swap level',
         'Click to toggle rendering Matter debug.'
     ];
     text = this.add.text(16, 16, lines, {
@@ -341,7 +327,7 @@ function update (time, delta)
 {
     var matterSprite = playerController.matterSprite;
     
-    inputs(time, delta, matterSprite, this.scene)
+    inputs(time, delta, matterSprite, this)
     
     if (!matterSprite) { return; }
 

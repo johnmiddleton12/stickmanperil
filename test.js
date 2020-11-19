@@ -70,6 +70,41 @@ function asteroidCollision(asteroids) {
     return new_array;
 }
 
+function bogoSort(arr) {
+    var isSorted = function(arr) {
+        for(var i = 1; i < arr.length; i++) {
+            if (arr[i-1] > arr[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    function shuffle(arr) {
+        var count = arr.length, temp, index;
+        while (count > 0) {
+            index = Math.floor(Math.random() * count);
+            count--;
+
+            temp = arr[count];
+            arr[count] = arr[index];
+            arr[index] = temp;
+        }
+        return arr;
+    };
+
+    function sort(arr) {
+        var sorted = false;
+        while (!sorted) {
+            arr == shuffle(arr);
+            sorted = isSorted(arr);
+        }
+        return arr;
+    };
+
+    return sort(arr);
+}
+
 function main() {
     // console.log('Factorial of 5:', foo(5));
     // console.log('19 Years to Days:', age_to_days(19));
@@ -106,7 +141,11 @@ function main() {
 
     // console.log(secondLargest([25, 26, 27, 28, 29, 35, 12, 3, 21]))
 
-    console.log(asteroidCollision([10, 2, -5]))
+    // console.log(asteroidCollision([10, 2, -5]))
+
+    var bogo_arr = [32, 4, 123, 24, 56, 2, 43, 123, 3, 4, 12];
+    console.log("Array Before - ", bogo_arr);
+    console.log("Array Sorted - ", bogoSort(bogo_arr));
 }
 
 main()

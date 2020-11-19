@@ -67,6 +67,7 @@ var SmoothedHorionztalControl = new Phaser.Class({
 
 function preload ()
 {
+    this.load.image('sky', 'assets/sky.png');
     this.load.tilemapTiledJSON('level0', 'assets/matter-platformer-dynamic-example.json');
     this.load.tilemapTiledJSON('level1', 'assets/level1.json');
     this.load.image('kenney_redux_64x64', 'assets/kenney_redux_64x64.png');
@@ -75,11 +76,13 @@ function preload ()
 
 }
 
-function load_level (key, self)
+function load_level (key, background, self)
 {
     // map = this.make.tilemap({ key: 'map' });
-    map = self.make.tilemap({ key: key});
+    
 
+    map = self.make.tilemap({ key: key});
+    self.add.image(map.widthInPixels, map.heightInPixels, background).setScale(x = 4, y = 2);
     tileset = map.addTilesetImage('kenney_redux_64x64');
     bgLayer = map.createDynamicLayer('Background Layer', tileset, 0, 0);
     groundLayer = map.createDynamicLayer('Ground Layer', tileset, 0, 0);
@@ -96,13 +99,14 @@ function load_level (key, self)
     // this.matter.world.convertTilemapLayer(fgLayer);
 
     self.matter.world.setBounds(map.widthInPixels, map.heightInPixels);
+
     
 }
 
 function create ()
 {
 
-    load_level(current_level, this);
+    load_level(current_level, 'sky', this);
     // load_level('map', this)
 
 

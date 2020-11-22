@@ -74,6 +74,9 @@ function preload ()
     this.load.spritesheet('player', 'assets/dude-cropped.png', { frameWidth: 32, frameHeight: 42 });
     this.load.image('box', 'assets/box-item-boxed.png');
 
+    this.load.spritesheet('stickman', 'assets/stickman/final_stickman.png', { frameWidth: 51, frameHeight: 51 });
+    // this.load.multiatlas('spriteJson', 'assets/stickman/sprite_all.json');
+
 }
 
 function load_level (key, background, self)
@@ -107,7 +110,7 @@ function create ()
 {
 
     load_level(current_level, 'sky', this);
-    // load_level('map', this)
+    // load_level('map', 'sky', this);
 
 
     this.matter.world.createDebugGraphic();
@@ -125,7 +128,8 @@ function create ()
 
     // The player is a collection of bodies and sensors
     playerController = {
-        matterSprite: this.matter.add.sprite(0, 0, 'player', 4),
+        // matterSprite: this.matter.add.sprite(0, 0, 'player', 4),
+        matterSprite: this.matter.add.sprite(0, 0, 'stickman', 4).setScale(1.2),
         blocked: {
             left: false,
             right: false,
@@ -196,21 +200,39 @@ function create ()
     cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     smoothMoveCameraTowards(playerController.matterSprite);
 
+    // this.anims.create({
+    //     key: 'left',
+    //     frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+    //     frameRate: 10,
+    //     repeat: -1
+    // });
+    // this.anims.create({
+    //     key: 'right',
+    //     frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
+    //     frameRate: 10,
+    //     repeat: -1
+    // });
+    // this.anims.create({
+    //     key: 'idle',
+    //     frames: this.anims.generateFrameNumbers('player', { start: 4, end: 4 }),
+    //     frameRate: 10,
+    //     repeat: -1
+    // });
     this.anims.create({
         key: 'left',
-        frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+        frames: this.anims.generateFrameNumbers('stickman', { start: 21, end: 27 }),
         frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'right',
-        frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
+        frames: this.anims.generateFrameNumbers('stickman', { start: 14, end: 20 }),
         frameRate: 10,
         repeat: -1
     });
     this.anims.create({
         key: 'idle',
-        frames: this.anims.generateFrameNumbers('player', { start: 4, end: 4 }),
+        frames: this.anims.generateFrameNumbers('stickman', { start: 0, end: 13 }),
         frameRate: 10,
         repeat: -1
     });

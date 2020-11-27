@@ -1,12 +1,9 @@
 // Function that collects all inputs
 
-function inputs (time, delta, sprite_var, self)
+function test_function (self)
 {
-    var matterSprite = sprite_var;
-
-    // Resets the game upon S press
-
     if (cursors.down.isDown) {
+        // self.matter.world.remove(door_sensor_body);
         self.scene.stop();
         if (current_level == 'level0') {
             current_level = 'level1';
@@ -15,6 +12,37 @@ function inputs (time, delta, sprite_var, self)
         }
         self.scene.start('main');
     }
+}
+
+function inputs (time, delta, sprite_var, self)
+{
+    var matterSprite = sprite_var;
+
+    // Resets the game upon S press
+
+    // if (cursors.down.isDown) {
+    //     self.scene.stop();
+    //     if (current_level == 'level0') {
+    //         current_level = 'level1';
+    //     } else {
+    //         current_level = 'level0';
+    //     }
+    //     self.scene.start('main');
+    // }
+    // if ((self.bodyA === self.playerBody && self.bodyB === self.door_sensor_body && cursors.down.isDown) ||
+    //     (self.bodyA === self.door_sensor_body && bodyB === self.playerBody && cursors.down.isDown))
+    //     {
+    //         self.matter.world.remove(door_sensor_body);
+    //         self.scene.stop();
+    //         if (current_level == 'level0') {
+    //             current_level = 'level1';
+    //         } else {
+    //             current_level = 'level0';
+    //         }
+    //         self.scene.start('main');
+            
+    //     }
+
 
     // Horizontal movement
 
@@ -27,8 +55,6 @@ function inputs (time, delta, sprite_var, self)
         smoothedControls.moveLeft(delta);
         matterSprite.anims.play('left', true);
 
-        // Lerp the velocity towards the max run using the smoothed controls. This simulates a
-        // player controlled acceleration.
         oldVelocityX = matterSprite.body.velocity.x;
         targetVelocityX = -playerController.speed.run;
         newVelocityX = Phaser.Math.Linear(oldVelocityX, targetVelocityX, -smoothedControls.value);
@@ -40,8 +66,6 @@ function inputs (time, delta, sprite_var, self)
         smoothedControls.moveRight(delta);
         matterSprite.anims.play('right', true);
 
-        // Lerp the velocity towards the max run using the smoothed controls. This simulates a
-        // player controlled acceleration.
         oldVelocityX = matterSprite.body.velocity.x;
         targetVelocityX = playerController.speed.run;
         newVelocityX = Phaser.Math.Linear(oldVelocityX, targetVelocityX, smoothedControls.value);

@@ -1,3 +1,7 @@
+// import PhaserMatterCollisionPlugin from "node_modules/phaser-matter-collision-plugin";
+// const { PhaserMatterCollisionPlugin } = require("phaser-matter-collision-plugin");
+
+
 var config = {
     type: Phaser.AUTO,
     width: 800,
@@ -16,6 +20,16 @@ var config = {
         preload: preload,
         create: create,
         update: update
+    },
+    // Install the scene plugin
+    plugins: {
+      scene: [
+        {
+          plugin: PhaserMatterCollisionPlugin, // The plugin class
+          key: "matterCollision", // Where to store in Scene.Systems, e.g. scene.sys.matterCollision
+          mapping: "matterCollision" // Where to store in the Scene, e.g. scene.matterCollision
+        }
+      ]
     }
 };
 
@@ -30,10 +44,8 @@ var tileset;
 var bgLayer;
 var groundLayer;
 var fgLayer;
-var current_level = 'level1';
+var current_level = 'level0';
 
-// Smoothed horizontal controls helper. This gives us a value between -1 and 1 depending on how long
-// the player has been pressing left or right, respectively.
 var SmoothedHorionztalControl = new Phaser.Class({
 
     initialize:
@@ -75,15 +87,10 @@ function preload ()
     this.load.image('box', 'assets/box-item-boxed.png');
 
     this.load.spritesheet('stickman', 'assets/stickman/final_stickman.png', { frameWidth: 51, frameHeight: 51 });
-    // this.load.multiatlas('spriteJson', 'assets/stickman/sprite_all.json');
-
 }
 
 function load_level (key, background, self)
 {
-    // map = this.make.tilemap({ key: 'map' });
-    
-
     map = self.make.tilemap({ key: key});
     self.add.image(map.widthInPixels, map.heightInPixels, background).setScale(x = 4, y = 2);
     tileset = map.addTilesetImage('kenney_redux_64x64');
@@ -91,7 +98,6 @@ function load_level (key, background, self)
     groundLayer = map.createDynamicLayer('Ground Layer', tileset, 0, 0);
     fgLayer = map.createDynamicLayer('Foreground Layer', tileset, 0, 0).setDepth(1);
 
-    // Set up the layer to have matter bodies. Any colliding tiles will be given a Matter body.
     groundLayer.setCollisionByProperty({ collides: true });
     self.matter.world.convertTilemapLayer(groundLayer);
 
@@ -110,11 +116,6 @@ function create ()
 {
 
     load_level(current_level, 'sky', this);
-    // load_level('map', 'sky', this);
-
-
-    this.matter.world.createDebugGraphic();
-    this.matter.world.drawDebug = false;
 
     // cursors = this.input.keyboard.createCursorKeys();
 
@@ -126,9 +127,7 @@ function create ()
 
     smoothedControls = new SmoothedHorionztalControl(0.001);
 
-    // The player is a collection of bodies and sensors
     playerController = {
-        // matterSprite: this.matter.add.sprite(0, 0, 'player', 4),
         matterSprite: this.matter.add.sprite(0, 0, 'stickman', 4).setScale(1.2),
         blocked: {
             left: false,
@@ -153,7 +152,7 @@ function create ()
         speed: {
             run: 5,
             jump: 7,
-            sideJump: 20
+            sideJump: 5
         }
     };
 
@@ -161,7 +160,6 @@ function create ()
     var w = playerController.matterSprite.width;
     var h = playerController.matterSprite.height;
 
-    // The player's body is going to be a compound body.
     var playerBody = M.Bodies.rectangle(0, 0, w * 0.75, h, { chamfer: { radius: 10 } });
 
     playerController.sensors.bottom = M.Bodies.rectangle(0, h * 0.5, w * 0.5, 5, { isSensor: true });
@@ -172,52 +170,46 @@ function create ()
             playerBody, playerController.sensors.bottom, playerController.sensors.left,
             playerController.sensors.right
         ],
-        restitution: 0.05 // Prevent body from sticking against a wall
+        restitution: 0.05 
     });
 
-    // There is a "Button Press Sensor" polygon in the "Sensors" layer in Tiled. We can use this to
-    // map out the "pressable" hitbox for the button.
-
     var sensor = map.findObject('Sensors', function (obj) {
-        // return obj.name === 'Button Press Sensor';
         return obj.name === 'Button Press Sensor';
     });
 
-
-    var center = M.Vertices.centre(sensor.polygon); // Matter places shapes by center of mass
+    var center = M.Vertices.centre(sensor.polygon); 
     var sensorBody = this.matter.add.fromVertices(
         sensor.x + center.x, sensor.y + center.y,
         sensor.polygon,
         { isStatic: true, isSensor: true }
     );
 
+    var door_sensor = map.findObject('Sensors', function (obj) {
+        return obj.name === 'Door Sensor';
+    });
+
+    var door_center = M.Vertices.centre(door_sensor.polygon); 
+    var door_sensor_body = this.matter.add.fromVertices(
+        door_sensor.x + door_center.x, door_sensor.y + door_center.y,
+        door_sensor.polygon,
+        { isStatic: true, isSensor: true}
+    );
+
+    // door_sensor_body.collisionFilter = {
+    //     'group': -1,
+    //     'category': 2,
+    //     'mask': 0,
+    //   };
+        
     playerController.matterSprite
         .setExistingBody(compoundBody)
-        .setFixedRotation() // Sets max inertia to prevent rotation
+        .setFixedRotation() 
         .setPosition(32, 1000);
 
     cam = this.cameras.main;
     cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     smoothMoveCameraTowards(playerController.matterSprite);
 
-    // this.anims.create({
-    //     key: 'left',
-    //     frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-    //     frameRate: 10,
-    //     repeat: -1
-    // });
-    // this.anims.create({
-    //     key: 'right',
-    //     frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
-    //     frameRate: 10,
-    //     repeat: -1
-    // });
-    // this.anims.create({
-    //     key: 'idle',
-    //     frames: this.anims.generateFrameNumbers('player', { start: 4, end: 4 }),
-    //     frameRate: 10,
-    //     repeat: -1
-    // });
     this.anims.create({
         key: 'left',
         frames: this.anims.generateFrameNumbers('stickman', { start: 21, end: 27 }),
@@ -237,10 +229,6 @@ function create ()
         repeat: -1
     });
 
-    // Use matter events to detect whether the player is touching a surface to the left, right or
-    // bottom.
-
-    // Loop over the active colliding pairs and count the surfaces the player is touching.
     this.matter.world.on('collisionstart', function (event) {
         for (var i = 0; i < event.pairs.length; i++)
         {
@@ -253,12 +241,9 @@ function create ()
 
                 var buttonTile = groundLayer.getTileAt(4, 18);
 
-                // Change the tile to the new index (a "pressed" button tile) and tell the existing
-                // matter body to update itself from the Tiled collision data.
                 buttonTile.index = 93;
                 buttonTile.physics.matterBody.setFromTileCollision();
 
-                // Animate a bridge of new tiles opening up over the lava.
                 for (var j = 5; j <= 14; j++)
                 {
                     this.time.addEvent({
@@ -266,30 +251,43 @@ function create ()
                         callback: function (x)
                         {
                             var bridgeTile = groundLayer.putTileAt(12, x, 19);
-
-                            // When creating a new tile that didn't already have a tile body, you
-                            // can use the tileBody factory method. See
-                            // Phaser.Physics.Matter.TileBody for options. This will default to
-                            // adding a body with the Tiled collision data here.
                             this.matter.add.tileBody(bridgeTile);
                         }.bind(this, j)
                     });
                 }
             }
+            // if ((bodyA === playerBody && bodyB === door_sensor_body && cursors.down.isDown) ||
+            // (bodyA === door_sensor_body && bodyB === playerBody && cursors.down.isDown))
+            // {
+            //     // self.matter.world.remove(door_sensor_body);
+            //     this.scene.stop();
+            //     if (current_level == 'level0') {
+            //         current_level = 'level1';
+            //     } else {
+            //         current_level = 'level0';
+            //     }
+            //     this.scene.start('main');
+                
+            // } 
+
         }
     }, this);
 
-    // Use matter events to detect whether the player is touching a surface to the left, right or
-    // bottom.
+    this.matterCollision.addOnCollideStart({
+        objectA: playerBody,
+        objectB: door_sensor_body,
+        callback: eventData => {
+            console.log("TESTING");
+            test_function(this);
+        }
+    });
 
-    // Before matter's update, reset the player's count of what surfaces it is touching.
     this.matter.world.on('beforeupdate', function (event) {
         playerController.numTouching.left = 0;
         playerController.numTouching.right = 0;
         playerController.numTouching.bottom = 0;
     });
 
-    // Loop over the active colliding pairs and count the surfaces the player is touching.
     this.matter.world.on('collisionactive', function (event)
     {
         var playerBody = playerController.body;
@@ -308,13 +306,10 @@ function create ()
             }
             else if (bodyA === bottom || bodyB === bottom)
             {
-                // Standing on any surface counts (e.g. jumping off of a non-static crate).
                 playerController.numTouching.bottom += 1;
             }
             else if ((bodyA === left && bodyB.isStatic) || (bodyB === left && bodyA.isStatic))
             {
-                // Only static objects count since we don't want to be blocked by an object that we
-                // can push around.
                 playerController.numTouching.left += 1;
             }
             else if ((bodyA === right && bodyB.isStatic) || (bodyB === right && bodyA.isStatic))
@@ -324,21 +319,14 @@ function create ()
         }
     });
 
-    // Update over, so now we can determine if any direction is blocked
     this.matter.world.on('afterupdate', function (event) {
         playerController.blocked.right = playerController.numTouching.right > 0 ? true : false;
         playerController.blocked.left = playerController.numTouching.left > 0 ? true : false;
         playerController.blocked.bottom = playerController.numTouching.bottom > 0 ? true : false;
     });
 
-    this.input.on('pointerdown', function () {
-        this.matter.world.drawDebug = !this.matter.world.drawDebug;
-        this.matter.world.debugGraphic.visible = this.matter.world.drawDebug;
-    }, this);
-
     var lines = [
-        'A and D to move, W to jump, S to swap level',
-        'Click to toggle rendering Matter debug.'
+        'A and D to move, W to jump, S to enter doors'
     ];
     text = this.add.text(16, 16, lines, {
         fontSize: '20px',
@@ -357,12 +345,8 @@ function update (time, delta)
     
     if (!matterSprite) { return; }
 
-    // Player death
-
     if (matterSprite.y > map.heightInPixels)
     {
-        // matterSprite.destroy();
-        // playerController.matterSprite = null;
         restart.call(this, this.scene);
         return;
     }    

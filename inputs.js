@@ -1,19 +1,5 @@
 // Function that collects all inputs
 
-function test_function (self)
-{
-    if (cursors.down.isDown) {
-        // self.matter.world.remove(door_sensor_body);
-        self.scene.stop();
-        if (current_level == 'level0') {
-            current_level = 'level1';
-        } else {
-            current_level = 'level0';
-        }
-        self.scene.start('main');
-    }
-}
-
 function inputs (time, delta, sprite_var, self)
 {
     var matterSprite = sprite_var;
@@ -49,6 +35,18 @@ function inputs (time, delta, sprite_var, self)
     var oldVelocityX;
     var targetVelocityX;
     var newVelocityX;
+
+    if (cursors.down.isDown && touching_door === true) {
+        // self.matter.world.remove(door_sensor_body);
+        touching_door = false;
+        self.scene.stop();
+        if (current_level == 'level0') {
+            current_level = 'level1';
+        } else {
+            current_level = 'level0';
+        }
+        self.scene.start('main');
+    }
 
     if (cursors.left.isDown && !playerController.blocked.left)
     {

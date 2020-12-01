@@ -45,6 +45,7 @@ var bgLayer;
 var groundLayer;
 var fgLayer;
 var current_level = 'level0';
+var touching_door = false;
 
 var SmoothedHorionztalControl = new Phaser.Class({
 
@@ -173,6 +174,18 @@ function create ()
         restitution: 0.05 
     });
 
+    if (current_level == 'level0') {
+        var door_sensor = map.findObject('Sensors', function (obj) {
+        return obj.name === 'Door Sensor';
+        });
+
+        var door_center = M.Vertices.centre(door_sensor.polygon); 
+        var door_sensor_body = this.matter.add.fromVertices(
+            door_sensor.x + door_center.x, door_sensor.y + door_center.y,
+            door_sensor.polygon, { isStatic: true, isSensor: true}
+        );
+    }
+
     var sensor = map.findObject('Sensors', function (obj) {
         return obj.name === 'Button Press Sensor';
     });
@@ -184,16 +197,7 @@ function create ()
         { isStatic: true, isSensor: true }
     );
 
-    var door_sensor = map.findObject('Sensors', function (obj) {
-        return obj.name === 'Door Sensor';
-    });
-
-    var door_center = M.Vertices.centre(door_sensor.polygon); 
-    var door_sensor_body = this.matter.add.fromVertices(
-        door_sensor.x + door_center.x, door_sensor.y + door_center.y,
-        door_sensor.polygon,
-        { isStatic: true, isSensor: true}
-    );
+    
 
     // door_sensor_body.collisionFilter = {
     //     'group': -1,
@@ -273,14 +277,24 @@ function create ()
         }
     }, this);
 
-    this.matterCollision.addOnCollideStart({
-        objectA: playerBody,
-        objectB: door_sensor_body,
-        callback: eventData => {
-            console.log("TESTING");
-            test_function(this);
-        }
-    });
+    if (current_level == 'level0') {
+        this.matterCollision.addOnCollideStart({
+            objectA: playerBody,
+            objectB: door_sensor_body,
+            callback: () => {
+                touching_door = true;
+                // test_function(this);
+            }
+        });
+    };
+    // this.matterCollision.removeOnCollideActive({
+    //     objectA: playerBody,
+    //     objectB: door_sensor_body,
+    //     callback: () => {
+    //         touching_door = false;
+    //         // test_function(this);
+    //     }
+    // });
 
     this.matter.world.on('beforeupdate', function (event) {
         playerController.numTouching.left = 0;
@@ -340,8 +354,15 @@ function create ()
 function update (time, delta)
 {
     var matterSprite = playerController.matterSprite;
-    
-    inputs(time, delta, matterSprite, this)
+
+    if (current_level == "level0") {
+        this.matterCollision.events.on("collisionend", function (event) {
+            touching_door = false;
+        });
+        
+    };   
+    console.log(touching_door);
+    inputs(time, delta, matterSprite, this);
     
     if (!matterSprite) { return; }
 
